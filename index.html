@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StudyForge | Modern Student Task Manager</title>
+    <title>StudyFocus | Student Task Manager</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
@@ -16,6 +16,19 @@
             --dark: #212529;
             --light: #f8f9fa;
             --gray: #adb5bd;
+            
+            /* Light mode defaults */
+            --bg-color: #f5f7fa;
+            --card-bg: white;
+            --text-color: var(--dark);
+            --border-color: #e2e8f0;
+        }
+
+        .dark-mode {
+            --bg-color: #1a1a2e;
+            --card-bg: #16213e;
+            --text-color: #e6e6e6;
+            --border-color: #2d3748;
         }
 
         * {
@@ -23,204 +36,116 @@
             padding: 0;
             box-sizing: border-box;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            transition: background-color 0.3s, color 0.3s;
         }
 
         body {
-            background: #f5f7fa;
-            color: var(--dark);
+            background: var(--bg-color);
+            color: var(--text-color);
             line-height: 1.6;
-        }
-
-        /* Layout */
-        .app-container {
-            display: grid;
-            grid-template-columns: 280px 1fr;
+            padding: 20px;
             min-height: 100vh;
         }
 
-        /* Sidebar */
-        .sidebar {
-            background: white;
-            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
-            padding: 1.5rem;
-            position: sticky;
-            top: 0;
-            height: 100vh;
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
         }
 
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin-bottom: 2rem;
-            color: var(--primary);
-            font-weight: 700;
-            font-size: 1.5rem;
-        }
-
-        .logo i {
-            font-size: 1.8rem;
-        }
-
-        .nav-menu {
-            list-style: none;
-            margin-bottom: 2rem;
-        }
-
-        .nav-item {
-            margin-bottom: 0.5rem;
-        }
-
-        .nav-link {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 0.75rem 1rem;
-            border-radius: 8px;
-            color: var(--dark);
-            text-decoration: none;
-            transition: all 0.2s;
-        }
-
-        .nav-link:hover, .nav-link.active {
-            background: var(--primary-light);
-            color: var(--primary);
-        }
-
-        .nav-link i {
-            width: 24px;
-            text-align: center;
-        }
-
-        /* Main Content */
-        .main-content {
-            padding: 2rem;
-        }
-
-        .header {
+        header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 2rem;
+            margin-bottom: 30px;
         }
 
-        .greeting h1 {
-            font-size: 1.8rem;
-            margin-bottom: 0.25rem;
+        h1 {
+            color: var(--primary);
         }
 
-        .greeting p {
-            color: var(--gray);
-        }
-
-        .user-profile {
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
+        .theme-toggle {
             background: var(--primary);
             color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
+            border: none;
+            border-radius: 50px;
+            padding: 8px 15px;
             cursor: pointer;
-        }
-
-        /* Cards */
-        .card {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .card-header {
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            margin-bottom: 1rem;
+            gap: 8px;
+            font-weight: 600;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border-color);
         }
 
         .card-title {
             font-size: 1.25rem;
-            font-weight: 600;
+            margin-bottom: 15px;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
-        /* Task Manager */
         .task-form {
             display: grid;
-            grid-template-columns: 2fr 1fr 1fr auto;
-            gap: 0.75rem;
-            margin-bottom: 1.5rem;
+            grid-template-columns: 2fr 1fr 1fr 1fr auto;
+            gap: 10px;
+            margin-bottom: 20px;
         }
 
-        .form-group {
-            display: flex;
-            flex-direction: column;
+        @media (max-width: 768px) {
+            .task-form {
+                grid-template-columns: 1fr;
+            }
         }
 
-        .form-label {
-            font-size: 0.875rem;
-            color: var(--gray);
-            margin-bottom: 0.25rem;
-        }
-
-        .form-control {
-            padding: 0.75rem;
-            border: 1px solid #e2e8f0;
+        input, select, button {
+            padding: 10px;
             border-radius: 8px;
-            font-size: 1rem;
-            transition: border 0.2s;
+            border: 1px solid var(--border-color);
+            background: var(--card-bg);
+            color: var(--text-color);
         }
 
-        .form-control:focus {
-            outline: none;
-            border-color: var(--primary);
-        }
-
-        .btn {
-            padding: 0.75rem 1.5rem;
-            border: none;
-            border-radius: 8px;
-            font-weight: 600;
+        button {
             cursor: pointer;
-            transition: all 0.2s;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
         }
 
         .btn-primary {
             background: var(--primary);
             color: white;
-        }
-
-        .btn-primary:hover {
-            background: var(--secondary);
-        }
-
-        .btn-sm {
-            padding: 0.5rem 1rem;
-            font-size: 0.875rem;
+            border: none;
+            font-weight: 600;
         }
 
         .filter-bar {
             display: flex;
-            gap: 0.5rem;
-            margin-bottom: 1.5rem;
+            gap: 8px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
         }
 
         .filter-btn {
-            background: white;
-            border: 1px solid #e2e8f0;
-            color: var(--dark);
+            padding: 8px 15px;
+            border-radius: 50px;
+            border: 1px solid var(--border-color);
+            background: var(--card-bg);
+            color: var(--text-color);
+            cursor: pointer;
         }
 
         .filter-btn.active {
             background: var(--primary);
-            border-color: var(--primary);
             color: white;
+            border-color: var(--primary);
         }
 
         .task-list {
@@ -230,411 +155,272 @@
         .task-item {
             display: flex;
             align-items: center;
-            padding: 1rem;
+            padding: 15px;
+            margin-bottom: 10px;
             border-radius: 8px;
-            margin-bottom: 0.75rem;
-            background: white;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-            transition: transform 0.2s;
+            background: var(--card-bg);
+            border-left: 5px solid var(--gray);
+            justify-content: space-between;
+            border: 1px solid var(--border-color);
         }
 
-        .task-item:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        .task-item.priority-high {
+            border-left-color: var(--danger);
         }
 
-        .task-checkbox {
-            margin-right: 1rem;
-            width: 20px;
-            height: 20px;
-            cursor: pointer;
+        .task-item.priority-medium {
+            border-left-color: var(--warning);
+        }
+
+        .task-item.priority-low {
+            border-left-color: var(--success);
+        }
+
+        .task-item.overdue {
+            background-color: rgba(247, 37, 133, 0.1);
         }
 
         .task-content {
-            flex: 1;
+            flex-grow: 1;
         }
 
         .task-title {
             font-weight: 500;
-            margin-bottom: 0.25rem;
+            margin-bottom: 5px;
         }
 
         .task-meta {
             display: flex;
-            gap: 1rem;
-            font-size: 0.875rem;
+            gap: 15px;
+            font-size: 0.9rem;
             color: var(--gray);
-        }
-
-        .task-category {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.25rem;
-        }
-
-        .task-priority {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            margin-right: 0.5rem;
-        }
-
-        .priority-high {
-            background: var(--danger);
-        }
-
-        .priority-medium {
-            background: var(--warning);
-        }
-
-        .priority-low {
-            background: var(--success);
-        }
-
-        .task-due {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.25rem;
-        }
-
-        .task-due.overdue {
-            color: var(--danger);
-            font-weight: 500;
         }
 
         .task-actions {
             display: flex;
-            gap: 0.5rem;
+            gap: 8px;
         }
 
         .task-btn {
-            width: 32px;
-            height: 32px;
+            width: 35px;
+            height: 35px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             background: transparent;
-            border: none;
-            color: var(--gray);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
             cursor: pointer;
-            transition: all 0.2s;
         }
 
         .task-btn:hover {
-            background: #f1f5f9;
-            color: var(--dark);
+            background: rgba(0,0,0,0.05);
         }
 
         .task-btn.delete:hover {
             color: var(--danger);
+            border-color: var(--danger);
         }
 
-        /* Productivity Tools */
-        .tools-grid {
+        .priority-badge {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+
+        .priority-high-badge {
+            background: var(--danger);
+        }
+
+        .priority-medium-badge {
+            background: var(--warning);
+        }
+
+        .priority-low-badge {
+            background: var(--success);
+        }
+
+        .timer-container {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1.5rem;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 600px) {
+            .timer-container {
+                grid-template-columns: 1fr;
+            }
         }
 
         .timer-display {
             font-size: 2.5rem;
-            font-weight: 700;
+            font-weight: bold;
             text-align: center;
-            margin: 1rem 0;
+            margin: 15px 0;
             font-family: 'Courier New', monospace;
-            color: var(--dark);
         }
 
         .timer-controls {
             display: flex;
-            gap: 0.75rem;
+            gap: 10px;
             justify-content: center;
         }
 
-        .quote-card {
+        .quote-container {
             background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
             color: white;
-            padding: 1.5rem;
+            padding: 20px;
             border-radius: 12px;
-            position: relative;
-            overflow: hidden;
+            margin-top: 20px;
         }
 
         .quote-text {
-            font-size: 1.1rem;
             font-style: italic;
-            margin-bottom: 1rem;
-            position: relative;
-            z-index: 1;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
         }
 
         .quote-author {
             text-align: right;
             font-weight: 600;
-            position: relative;
-            z-index: 1;
         }
 
-        /* Responsive */
-        @media (max-width: 992px) {
-            .app-container {
-                grid-template-columns: 1fr;
-            }
-            
-            .sidebar {
-                height: auto;
-                position: static;
-            }
-            
-            .task-form {
-                grid-template-columns: 1fr;
-            }
+        .empty-state {
+            text-align: center;
+            padding: 30px;
+            color: var(--gray);
         }
     </style>
 </head>
 <body>
-    <div class="app-container">
-        <!-- Sidebar Navigation -->
-        <aside class="sidebar">
-            <div class="logo">
-                <i class="fas fa-graduation-cap"></i>
-                <span>StudyForge</span>
-            </div>
-            
-            <ul class="nav-menu">
-                <li class="nav-item">
-                    <a href="#" class="nav-link active">
-                        <i class="fas fa-tasks"></i>
-                        <span>Tasks</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" class="nav-link">
-                        <i class="fas fa-calendar-alt"></i>
-                        <span>Calendar</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" class="nav-link">
-                        <i class="fas fa-chart-line"></i>
-                        <span>Progress</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" class="nav-link">
-                        <i class="fas fa-book"></i>
-                        <span>Subjects</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" class="nav-link">
-                        <i class="fas fa-cog"></i>
-                        <span>Settings</span>
-                    </a>
-                </li>
-            </ul>
-            
-            <div class="quote-card">
-                <p class="quote-text" id="motivationalQuote">Push yourself, because no one else is going to do it for you.</p>
-                <p class="quote-author">- Motivational Quote</p>
-            </div>
-        </aside>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-tasks"></i> StudyFocus</h1>
+            <button class="theme-toggle" id="themeToggle">
+                <i class="fas fa-moon"></i> Dark Mode
+            </button>
+        </header>
 
-        <!-- Main Content -->
-        <main class="main-content">
-            <header class="header">
-                <div class="greeting">
-                    <h1>Good Morning, Alex!</h1>
-                    <p>Here's what you need to focus on today</p>
-                </div>
-                <div class="user-profile">A</div>
-            </header>
-
-            <!-- Task Manager Section -->
+        <main>
+            <!-- Task Manager -->
             <section class="card">
-                <div class="card-header">
-                    <h2 class="card-title">Task Manager</h2>
-                    <div class="task-actions">
-                        <button class="btn btn-primary btn-sm" id="addTaskBtn">
-                            <i class="fas fa-plus"></i> Add Task
-                        </button>
-                    </div>
-                </div>
+                <h2 class="card-title"><i class="fas fa-list-check"></i> Task Manager</h2>
                 
                 <form class="task-form" id="taskForm">
-                    <div class="form-group">
-                        <label class="form-label">Task Title</label>
-                        <input type="text" class="form-control" id="taskTitle" placeholder="What needs to be done?">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">Category</label>
-                        <select class="form-control" id="taskCategory">
-                            <option value="study">Study</option>
-                            <option value="homework">Homework</option>
-                            <option value="project">Project</option>
-                            <option value="research">Research</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">Priority</label>
-                        <select class="form-control" id="taskPriority">
-                            <option value="low">Low</option>
-                            <option value="medium">Medium</option>
-                            <option value="high">High</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">Due Date</label>
-                        <input type="date" class="form-control" id="taskDueDate">
-                    </div>
+                    <input type="text" id="taskTitle" placeholder="Task title" required>
+                    <select id="taskCategory">
+                        <option value="study">Study</option>
+                        <option value="homework">Homework</option>
+                        <option value="project">Project</option>
+                        <option value="research">Research</option>
+                    </select>
+                    <select id="taskPriority">
+                        <option value="low">Low Priority</option>
+                        <option value="medium">Medium Priority</option>
+                        <option value="high">High Priority</option>
+                    </select>
+                    <input type="date" id="taskDueDate">
+                    <button type="submit" class="btn-primary">Add</button>
                 </form>
                 
                 <div class="filter-bar">
-                    <button class="btn filter-btn active" data-filter="all">All Tasks</button>
-                    <button class="btn filter-btn" data-filter="today">Today</button>
-                    <button class="btn filter-btn" data-filter="high">High Priority</button>
-                    <button class="btn filter-btn" data-filter="study">Study</button>
+                    <button class="filter-btn active" data-filter="all">All Tasks</button>
+                    <button class="filter-btn" data-filter="today">Today</button>
+                    <button class="filter-btn" data-filter="high">High Priority</button>
+                    <button class="filter-btn" data-filter="study">Study</button>
                 </div>
                 
                 <ul class="task-list" id="taskList">
-                    <!-- Tasks will be added here dynamically -->
+                    <div class="empty-state">No tasks yet. Add your first task above!</div>
                 </ul>
             </section>
 
-            <!-- Productivity Tools Section -->
-            <section>
-                <h2 class="card-title" style="margin-bottom: 1.5rem;">Productivity Tools</h2>
-                <div class="tools-grid">
-                    <!-- Pomodoro Timer -->
-                    <div class="card">
-                        <div class="card-header">
-                            <h2 class="card-title">Pomodoro Timer</h2>
-                            <i class="fas fa-clock"></i>
-                        </div>
-                        <div class="timer-display" id="pomodoroTimer">25:00</div>
-                        <div class="timer-controls">
-                            <button class="btn btn-primary" id="startPomodoro">
-                                <i class="fas fa-play"></i> Start
-                            </button>
-                            <button class="btn" id="resetPomodoro">
-                                <i class="fas fa-redo"></i> Reset
-                            </button>
-                        </div>
+            <!-- Productivity Tools -->
+            <div class="timer-container">
+                <!-- Pomodoro Timer -->
+                <section class="card">
+                    <h2 class="card-title"><i class="fas fa-clock"></i> Pomodoro Timer</h2>
+                    <div class="timer-display" id="pomodoroDisplay">25:00</div>
+                    <div class="timer-controls">
+                        <button class="btn-primary" id="startPomodoro">Start</button>
+                        <button id="resetPomodoro">Reset</button>
                     </div>
-                    
-                    <!-- Exam Countdown -->
-                    <div class="card">
-                        <div class="card-header">
-                            <h2 class="card-title">Exam Countdown</h2>
-                            <i class="fas fa-calendar-day"></i>
-                        </div>
-                        <input type="date" class="form-control" id="examDateInput" style="margin-bottom: 1rem;">
-                        <div class="timer-display" id="examCountdown">Select exam date</div>
-                        <div class="timer-controls">
-                            <button class="btn btn-primary" id="startCountdown">
-                                <i class="fas fa-rocket"></i> Start
-                            </button>
-                        </div>
+                </section>
+                
+                <!-- Exam Countdown -->
+                <section class="card">
+                    <h2 class="card-title"><i class="fas fa-calendar-day"></i> Exam Countdown</h2>
+                    <input type="date" id="examDate" class="full-width" style="margin-bottom: 15px;">
+                    <div class="timer-display" id="examCountdown">Set exam date</div>
+                    <div class="timer-controls">
+                        <button class="btn-primary" id="startCountdown">Start Countdown</button>
                     </div>
-                </div>
+                </section>
+            </div>
+
+            <!-- Motivational Quote -->
+            <section class="quote-container">
+                <p class="quote-text" id="motivationalQuote">Loading motivational quote...</p>
+                <p class="quote-author" id="quoteAuthor"></p>
             </section>
         </main>
     </div>
 
     <script>
-        // Motivational Quotes
-        const quotes = [
-            {
-                text: "Push yourself, because no one else is going to do it for you.",
-                author: "Anonymous"
-            },
-            {
-                text: "The secret of getting ahead is getting started.",
-                author: "Mark Twain"
-            },
-            {
-                text: "Don't watch the clock; do what it does. Keep going.",
-                author: "Sam Levenson"
-            },
-            {
-                text: "Success is the sum of small efforts, repeated day in and day out.",
-                author: "Robert Collier"
-            },
-            {
-                text: "The expert in anything was once a beginner.",
-                author: "Helen Hayes"
-            }
-        ];
+        // DOM Elements
+        const themeToggle = document.getElementById('themeToggle');
+        const taskForm = document.getElementById('taskForm');
+        const taskList = document.getElementById('taskList');
+        const startPomodoroBtn = document.getElementById('startPomodoro');
+        const resetPomodoroBtn = document.getElementById('resetPomodoro');
+        const startCountdownBtn = document.getElementById('startCountdown');
+        const motivationalQuote = document.getElementById('motivationalQuote');
+        const quoteAuthor = document.getElementById('quoteAuthor');
 
-        // Load random quote
-        function loadRandomQuote() {
-            const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
-            document.getElementById('motivationalQuote').textContent = randomQuote.text;
-        }
-
-        // Task Manager
+        // State
         let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+        let isPomodoroRunning = false;
+        let pomodoroInterval;
+        let pomodoroTime = 25 * 60; // 25 minutes in seconds
+        let countdownInterval;
 
-        function renderTasks(filter = 'all') {
-            const taskList = document.getElementById('taskList');
-            taskList.innerHTML = '';
+        // Initialize
+        checkThemePreference();
+        renderTasks();
+        loadRandomQuote();
+        updatePomodoroDisplay();
 
-            const today = new Date().toISOString().split('T')[0];
-            
-            let filteredTasks = tasks;
-            if (filter === 'today') {
-                filteredTasks = tasks.filter(task => task.dueDate === today);
-            } else if (filter === 'high') {
-                filteredTasks = tasks.filter(task => task.priority === 'high');
-            } else if (filter === 'study') {
-                filteredTasks = tasks.filter(task => task.category === 'study');
+        // Theme Toggle
+        themeToggle.addEventListener('click', toggleTheme);
+
+        function checkThemePreference() {
+            const darkMode = localStorage.getItem('darkMode') === 'true';
+            if (darkMode) {
+                document.body.classList.add('dark-mode');
+                themeToggle.innerHTML = '<i class="fas fa-sun"></i> Light Mode';
             }
-
-            if (filteredTasks.length === 0) {
-                taskList.innerHTML = '<p style="text-align: center; color: var(--gray); padding: 1rem;">No tasks found</p>';
-                return;
-            }
-
-            filteredTasks.forEach(task => {
-                const taskItem = document.createElement('li');
-                taskItem.className = 'task-item';
-                
-                const isOverdue = task.dueDate && task.dueDate < today;
-                const dueDateText = task.dueDate ? 
-                    (isOverdue ? 'Overdue' : new Date(task.dueDate).toLocaleDateString()) : 'No deadline';
-                
-                taskItem.innerHTML = `
-                    <input type="checkbox" class="task-checkbox" ${task.completed ? 'checked' : ''}>
-                    <div class="task-content">
-                        <div class="task-title">${task.title}</div>
-                        <div class="task-meta">
-                            <span class="task-category">
-                                <span class="task-priority priority-${task.priority}"></span>
-                                ${task.category}
-                            </span>
-                            <span class="task-due ${isOverdue ? 'overdue' : ''}">
-                                <i class="far fa-calendar-alt"></i>
-                                ${dueDateText}
-                            </span>
-                        </div>
-                    </div>
-                    <div class="task-actions">
-                        <button class="task-btn edit">
-                            <i class="far fa-edit"></i>
-                        </button>
-                        <button class="task-btn delete">
-                            <i class="far fa-trash-alt"></i>
-                        </button>
-                    </div>
-                `;
-
-                taskList.appendChild(taskItem);
-            });
         }
+
+        function toggleTheme() {
+            document.body.classList.toggle('dark-mode');
+            const isDarkMode = document.body.classList.contains('dark-mode');
+            localStorage.setItem('darkMode', isDarkMode);
+            
+            if (isDarkMode) {
+                themeToggle.innerHTML = '<i class="fas fa-sun"></i> Light Mode';
+            } else {
+                themeToggle.innerHTML = '<i class="fas fa-moon"></i> Dark Mode';
+            }
+        }
+
+        // Task Management
+        taskForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            addTask();
+        });
 
         function addTask() {
             const title = document.getElementById('taskTitle').value.trim();
@@ -653,13 +439,87 @@
                 category,
                 priority,
                 dueDate,
-                completed: false
+                completed: false,
+                createdAt: new Date().toISOString()
             };
 
             tasks.push(newTask);
             saveTasks();
             renderTasks();
-            document.getElementById('taskForm').reset();
+            taskForm.reset();
+            
+            // Check for urgent tasks
+            checkDeadlines();
+        }
+
+        function renderTasks(filter = 'all') {
+            if (tasks.length === 0) {
+                taskList.innerHTML = '<div class="empty-state">No tasks yet. Add your first task above!</div>';
+                return;
+            }
+
+            const today = new Date().toISOString().split('T')[0];
+            let filteredTasks = tasks;
+
+            switch (filter) {
+                case 'today':
+                    filteredTasks = tasks.filter(task => task.dueDate === today);
+                    break;
+                case 'high':
+                    filteredTasks = tasks.filter(task => task.priority === 'high');
+                    break;
+                case 'study':
+                    filteredTasks = tasks.filter(task => task.category === 'study');
+                    break;
+            }
+
+            if (filteredTasks.length === 0) {
+                taskList.innerHTML = '<div class="empty-state">No tasks match this filter</div>';
+                return;
+            }
+
+            taskList.innerHTML = filteredTasks.map(task => {
+                const isOverdue = task.dueDate && task.dueDate < today;
+                const dueDateText = task.dueDate ? 
+                    new Date(task.dueDate).toLocaleDateString() : 'No deadline';
+                
+                let priorityBadge;
+                if (task.priority === 'high') priorityBadge = 'priority-high-badge';
+                else if (task.priority === 'medium') priorityBadge = 'priority-medium-badge';
+                else priorityBadge = 'priority-low-badge';
+
+                return `
+                    <li class="task-item priority-${task.priority} ${isOverdue ? 'overdue' : ''}">
+                        <div class="task-content">
+                            <div class="task-title">${task.title}</div>
+                            <div class="task-meta">
+                                <span><span class="priority-badge ${priorityBadge}"></span>${task.priority}</span>
+                                <span><i class="fas fa-tag"></i> ${task.category}</span>
+                                <span><i class="far fa-calendar"></i> ${dueDateText}</span>
+                            </div>
+                        </div>
+                        <div class="task-actions">
+                            <button class="task-btn delete" data-id="${task.id}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </li>
+                `;
+            }).join('');
+
+            // Add event listeners to delete buttons
+            document.querySelectorAll('.task-btn.delete').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const taskId = parseInt(this.getAttribute('data-id'));
+                    deleteTask(taskId);
+                });
+            });
+        }
+
+        function deleteTask(taskId) {
+            tasks = tasks.filter(task => task.id !== taskId);
+            saveTasks();
+            renderTasks();
         }
 
         function saveTasks() {
@@ -668,29 +528,53 @@
 
         // Filter tasks
         document.querySelectorAll('.filter-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
+            btn.addEventListener('click', function() {
                 document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                renderTasks(btn.dataset.filter);
+                this.classList.add('active');
+                renderTasks(this.getAttribute('data-filter'));
             });
         });
 
-        // Pomodoro Timer
-        let pomodoroTime = 25 * 60;
-        let pomodoroInterval;
-        let isPomodoroRunning = false;
-
-        function updatePomodoroDisplay() {
-            const minutes = Math.floor(pomodoroTime / 60).toString().padStart(2, '0');
-            const seconds = (pomodoroTime % 60).toString().padStart(2, '0');
-            document.getElementById('pomodoroTimer').textContent = `${minutes}:${seconds}`;
+        // Check for approaching deadlines
+        function checkDeadlines() {
+            const today = new Date();
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            
+            tasks.forEach(task => {
+                if (!task.dueDate) return;
+                
+                const dueDate = new Date(task.dueDate);
+                const timeDiff = dueDate - today;
+                const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+                
+                if (daysDiff === 0) {
+                    showAlert(`"${task.title}" is due today!`, 'high');
+                } else if (daysDiff === 1) {
+                    showAlert(`"${task.title}" is due tomorrow!`, 'medium');
+                } else if (daysDiff <= 3) {
+                    showAlert(`"${task.title}" is due in ${daysDiff} days`, 'low');
+                }
+            });
         }
 
+        function showAlert(message, priority) {
+            // In a real app, you might use a toast notification
+            console.log(`${priority.toUpperCase()} PRIORITY: ${message}`);
+        }
+
+        // Pomodoro Timer
+        startPomodoroBtn.addEventListener('click', startPomodoro);
+        resetPomodoroBtn.addEventListener('click', resetPomodoro);
+
         function startPomodoro() {
-            if (isPomodoroRunning) return;
-            
+            if (isPomodoroRunning) {
+                pausePomodoro();
+                return;
+            }
+
             isPomodoroRunning = true;
-            document.getElementById('startPomodoro').innerHTML = '<i class="fas fa-pause"></i> Pause';
+            startPomodoroBtn.textContent = 'Pause';
             
             pomodoroInterval = setInterval(() => {
                 pomodoroTime--;
@@ -699,58 +583,101 @@
                 if (pomodoroTime <= 0) {
                     clearInterval(pomodoroInterval);
                     alert('Pomodoro session complete! Take a 5-minute break.');
-                    pomodoroTime = 5 * 60;
+                    pomodoroTime = 5 * 60; // 5-minute break
                     updatePomodoroDisplay();
                     isPomodoroRunning = false;
-                    document.getElementById('startPomodoro').innerHTML = '<i class="fas fa-play"></i> Start';
+                    startPomodoroBtn.textContent = 'Start';
                 }
             }, 1000);
         }
 
+        function pausePomodoro() {
+            clearInterval(pomodoroInterval);
+            isPomodoroRunning = false;
+            startPomodoroBtn.textContent = 'Resume';
+        }
+
         function resetPomodoro() {
             clearInterval(pomodoroInterval);
+            isPomodoroRunning = false;
             pomodoroTime = 25 * 60;
             updatePomodoroDisplay();
-            isPomodoroRunning = false;
-            document.getElementById('startPomodoro').innerHTML = '<i class="fas fa-play"></i> Start';
+            startPomodoroBtn.textContent = 'Start';
+        }
+
+        function updatePomodoroDisplay() {
+            const minutes = Math.floor(pomodoroTime / 60).toString().padStart(2, '0');
+            const seconds = (pomodoroTime % 60).toString().padStart(2, '0');
+            document.getElementById('pomodoroDisplay').textContent = `${minutes}:${seconds}`;
         }
 
         // Exam Countdown
-        function updateExamCountdown() {
-            const examDate = document.getElementById('examDateInput').value;
-            if (!examDate) return;
+        startCountdownBtn.addEventListener('click', startExamCountdown);
 
-            const examTime = new Date(examDate).getTime();
-            const now = new Date().getTime();
-            const distance = examTime - now;
-
-            if (distance < 0) {
-                document.getElementById('examCountdown').textContent = 'Exam day!';
+        function startExamCountdown() {
+            const examDateInput = document.getElementById('examDate').value;
+            if (!examDateInput) {
+                alert('Please select an exam date');
                 return;
             }
 
-            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
-            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-
-            document.getElementById('examCountdown').textContent = `${days}d ${hours}h ${minutes}m`;
+            if (countdownInterval) clearInterval(countdownInterval);
+            
+            const examDate = new Date(examDateInput).getTime();
+            
+            countdownInterval = setInterval(() => {
+                const now = new Date().getTime();
+                const distance = examDate - now;
+                
+                if (distance < 0) {
+                    clearInterval(countdownInterval);
+                    document.getElementById('examCountdown').textContent = 'Exam day!';
+                    return;
+                }
+                
+                const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                
+                document.getElementById('examCountdown').textContent = `${days}d ${hours}h ${minutes}m`;
+            }, 1000);
         }
 
-        // Event Listeners
-        document.getElementById('addTaskBtn').addEventListener('click', addTask);
-        document.getElementById('startPomodoro').addEventListener('click', startPomodoro);
-        document.getElementById('resetPomodoro').addEventListener('click', resetPomodoro);
-        document.getElementById('startCountdown').addEventListener('click', () => {
-            setInterval(updateExamCountdown, 1000);
-            updateExamCountdown();
-        });
+        // Motivational Quotes
+        const quotes = [
+            {
+                text: "The secret of getting ahead is getting started.",
+                author: "Mark Twain"
+            },
+            {
+                text: "You don't have to be great to start, but you have to start to be great.",
+                author: "Zig Ziglar"
+            },
+            {
+                text: "Success is the sum of small efforts, repeated day in and day out.",
+                author: "Robert Collier"
+            },
+            {
+                text: "The expert in anything was once a beginner.",
+                author: "Helen Hayes"
+            },
+            {
+                text: "Push yourself, because no one else is going to do it for you.",
+                author: "Anonymous"
+            }
+        ];
 
-        // Initialize
-        loadRandomQuote();
-        renderTasks();
+        function loadRandomQuote() {
+            const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
+            motivationalQuote.textContent = randomQuote.text;
+            quoteAuthor.textContent = `— ${randomQuote.author}`;
+        }
 
         // Change quote every 30 seconds
         setInterval(loadRandomQuote, 30000);
+
+        // Check for deadlines every hour
+        setInterval(checkDeadlines, 3600000);
     </script>
 </body>
 </html>
