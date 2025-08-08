@@ -1,0 +1,654 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>TaskForge (Student)</title>
+  <style>:root{
+  --bg:#f6f8fb;
+  --card:#ffffff;
+  --muted:#6b7280;
+  --accent:#6ea8fe;
+  --success:#22c55e;
+  --warn:#f59e0b;
+  --danger:#ef4444;
+  --glass: rgba(255,255,255,0.6);
+  --radius:12px;
+  --shadow: 0 6px 18px rgba(20,20,50,0.06);
+  --font: 'Segoe UI', Roboto, Arial, sans-serif;
+}
+*{box-sizing:border-box;font-family:var(--font)}
+body{margin:0;background:var(--bg);color:#0f172a}
+.app{display:flex;min-height:100vh}
+
+/* SIDEBAR */
+.sidebar{width:300px;padding:20px;background:linear-gradient(180deg,#fff,#fbfdff);box-shadow:var(--shadow)}
+.brand{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.brand h1{margin:0;font-size:20px;color:#0b1220}
+.theme-btn{background:transparent;border:none;font-size:18px;cursor:pointer}
+
+.quote-card{background:var(--card);padding:14px;border-radius:10px;margin:10px 0;box-shadow:var(--shadow);font-style:italic;color:var(--muted)}
+
+.category-section h3, .filters h3, .export-section h3{margin:14px 0 6px}
+.category-list{list-style:none;padding:0;margin:0 0 8px;max-height:140px;overflow:auto}
+.category-list li{display:flex;align-items:center;justify-content:space-between;padding:6px 8px;border-radius:8px;margin-bottom:6px;background:linear-gradient(180deg,#fff,#fcfdff)}
+.add-category{display:flex;gap:6px;padding-top:6px}
+.add-category input[type="color"]{width:36px;height:36px;padding:0;border-radius:6px;border:1px solid #e6eefb}
+
+/* FILTERS */
+.filters{margin-top:8px}
+.filter-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.filter-row select, .filter-row input{padding:6px;border-radius:8px;border:1px solid #e6eefb}
+
+/* MAIN */
+.main{flex:1;padding:20px;display:flex;flex-direction:column}
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+.topbar h2{margin:0}
+.primary{background:var(--accent);color:white;padding:8px 12px;border-radius:8px;border:none;cursor:pointer}
+.widgets{display:flex;gap:18px}
+.widget{background:var(--card);flex:1;padding:14px;border-radius:var(--radius);box-shadow:var(--shadow)}
+.right-widgets{width:320px;display:flex;flex-direction:column;gap:12px}
+.small{padding:12px}
+.task-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.task-card{background:linear-gradient(180deg,#fff,#fcfeff);padding:12px;border-radius:10px;border:1px solid #eef7ff;box-shadow:0 6px 12px rgba(12,20,40,0.04)}
+.card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.tag{padding:6px 8px;border-radius:999px;font-size:12px;font-weight:600}
+.priority-low{background:#d1fae5;color:var(--success)}
+.priority-medium{background:#fff7ed;color:var(--warn)}
+.priority-high{background:#ffe4e6;color:var(--danger)}
+.small .pomodoro-timer{font-size:28px;text-align:center;padding:8px 0;font-weight:700}
+.pom-controls{display:flex;gap:6px;justify-content:center;margin-top:8px}
+.exam-list{display:flex;flex-direction:column;gap:8px}
+
+/* FOOTER */
+.footer{margin-top:auto;padding:12px;text-align:center;color:var(--muted)}
+
+/* MODAL */
+.modal-overlay{position:fixed;left:0;right:0;top:0;bottom:0;background:rgba(15,23,42,0.45);display:flex;align-items:center;justify-content:center}
+.modal{background:var(--card);padding:14px;border-radius:12px;min-width:320px;box-shadow:var(--shadow)}
+.form-row{display:flex;flex-direction:column;margin-bottom:10px}
+.split{display:flex;gap:8px}
+.align-right{display:flex;justify-content:flex-end;gap:8px}
+.hidden{display:none}
+
+/* Toasts */
+.toast-container{position:fixed;right:20px;bottom:20px;display:flex;flex-direction:column;gap:8px}
+.toast{background:#111827;color:white;padding:10px 12px;border-radius:8px;box-shadow:var(--shadow);opacity:0.96}
+
+/* Dark mode */
+body.dark{background:#0b1220;color:#e6eef8}
+body.dark .sidebar{background:#071127}
+body.dark .quote-card, body.dark .widget, body.dark .modal{background:#07192b}
+body.dark .task-card{background:linear-gradient(180deg,#071622,#072233);border:1px solid rgba(255,255,255,0.04)}
+</style>
+  <script>
+    const STORAGE_TASKS = 'tf_tasks_v1';
+const STORAGE_CATS  = 'tf_cats_v1';
+const STORAGE_POM   = 'tf_pom_v1';
+
+// Utility: load/save JSON
+function loadJSON(key, fallback) {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : fallback;
+  } catch (e) { return fallback; }
+}
+function saveJSON(key, obj) { localStorage.setItem(key, JSON.stringify(obj)); }
+
+// ---------- Initial data ----------
+let tasks = loadJSON(STORAGE_TASKS, []); // each: {id,title,desc,category,date,time,priority,completed}
+let categories = loadJSON(STORAGE_CATS, [{name:'General',color:'#6ea8fe'}]);
+let pomState = loadJSON(STORAGE_POM, {sessionsToday:0});
+
+// ---------- UI references ----------
+const categoryList = document.getElementById('categoryList');
+const categoryFilter = document.getElementById('categoryFilter');
+const priorityFilter = document.getElementById('priorityFilter');
+const taskListEl = document.getElementById('taskList');
+const taskCategorySel = document.getElementById('taskCategory');
+const todaySummary = document.getElementById('todaySummary');
+const quoteEl = document.getElementById('quote');
+const examListEl = document.getElementById('examList');
+const pomSessionsEl = document.getElementById('pomSessions');
+const modalOverlay = document.getElementById('modalOverlay');
+const examModal = document.getElementById('examModal');
+
+// ---------- Misc helpers ----------
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+function formatDateForDisplay(dStr, tStr){
+  if(!dStr) return 'No due';
+  const d = new Date(dStr + (tStr ? 'T'+tStr : ''));
+  return d.toLocaleString();
+}
+function daysUntil(dateStr){
+  const today = new Date(); today.setHours(0,0,0,0);
+  const d = new Date(dateStr); d.setHours(0,0,0,0);
+  const diff = Math.ceil((d - today)/ (1000*60*60*24));
+  return diff;
+}
+
+// ---------- Quote logic (same quote for the whole day) ----------
+const quotes = [
+  "Small steps each day lead to big wins.",
+  "Revision beats last-minute panic. Start today.",
+  "You are closer than yesterday. Keep going.",
+  "Do one thing right now that your future self will thank you for.",
+  "Focus on progress, not perfection."
+];
+function getDailyQuote(){
+  const today = new Date();
+  return quotes[today.getDate() % quotes.length];
+}
+
+// ---------- Render categories ----------
+function renderCategories(){
+  categoryList.innerHTML = '';
+  categoryFilter.innerHTML = '<option value="all">All</option>';
+  taskCategorySel.innerHTML = '';
+
+  categories.forEach(cat => {
+    const li = document.createElement('li');
+    const left = document.createElement('div');
+    left.style.display='flex'; left.style.alignItems='center'; left.style.gap='8px';
+
+    const dot = document.createElement('span');
+    dot.style.width='12px'; dot.style.height='12px'; dot.style.borderRadius='50%';
+    dot.style.background=cat.color;
+
+    const name = document.createElement('span');
+    name.innerText = cat.name;
+
+    left.appendChild(dot); left.appendChild(name);
+
+    const del = document.createElement('button');
+    del.innerText='✖'; del.title='Remove category';
+    del.onclick = () => {
+      // remove only if no tasks exist in this category
+      const has = tasks.some(t => t.category === cat.name);
+      if(has){ showToast('Category not empty. Remove tasks first.'); return; }
+      categories = categories.filter(c => c.name !== cat.name);
+      saveJSON(STORAGE_CATS,categories);
+      renderAll();
+    };
+
+    li.appendChild(left); li.appendChild(del);
+    categoryList.appendChild(li);
+
+    // populate selects
+    const opt = document.createElement('option'); opt.value=cat.name; opt.innerText=cat.name;
+    categoryFilter.appendChild(opt);
+    const opt2 = opt.cloneNode(true); taskCategorySel.appendChild(opt2);
+  });
+}
+
+// add category button
+document.getElementById('addCategoryBtn').addEventListener('click', () => {
+  const name = document.getElementById('newCategoryName').value.trim();
+  const color = document.getElementById('newCategoryColor').value;
+  if(!name){ showToast('Enter category name'); return; }
+  if(categories.some(c=>c.name===name)){ showToast('Category exists'); return; }
+  categories.push({name, color});
+  saveJSON(STORAGE_CATS, categories);
+  document.getElementById('newCategoryName').value = '';
+  renderAll();
+});
+
+// ---------- Task rendering ----------
+function priorityClass(p){
+  if(p==='high') return 'priority-high';
+  if(p==='medium') return 'priority-medium';
+  return 'priority-low';
+}
+
+function renderTasks(){
+  taskListEl.innerHTML = '';
+  // filters
+  const pf = priorityFilter.value;
+  const cf = categoryFilter.value;
+
+  const filtered = tasks.filter(t => {
+    if(pf !== 'all' && t.priority !== pf) return false;
+    if(cf !== 'all' && t.category !== cf) return false;
+    return true;
+  });
+
+  if(filtered.length === 0){
+    taskListEl.innerHTML = '<div style="color:var(--muted)">No tasks found</div>';
+    return;
+  }
+
+  filtered.forEach(t => {
+    const card = document.createElement('div'); card.className='task-card';
+    const header = document.createElement('div'); header.className='card-header';
+    const title = document.createElement('div');
+    title.innerHTML = `<strong>${t.title}</strong><div style="font-size:12px;color:var(--muted)">${t.subject || ''}</div>`;
+    header.appendChild(title);
+
+    const right = document.createElement('div'); right.style.display='flex'; right.style.gap='8px'; right.style.alignItems='center';
+
+    const ptag = document.createElement('div'); ptag.className='tag ' + priorityClass(t.priority);
+    ptag.innerText = t.priority.toUpperCase();
+    right.appendChild(ptag);
+
+    const catColor = (categories.find(c=>c.name===t.category)||{color:'#ccc'}).color;
+    const ctag = document.createElement('div'); ctag.style.background=catColor; ctag.className='tag'; ctag.innerText = t.category || 'General';
+    right.appendChild(ctag);
+
+    header.appendChild(right);
+    card.appendChild(header);
+
+    const desc = document.createElement('div'); desc.style.color='var(--muted)'; desc.style.marginBottom='8px'; desc.innerText = t.desc || '';
+    card.appendChild(desc);
+
+    const meta = document.createElement('div'); meta.style.fontSize='13px'; meta.style.color='var(--muted)';
+    meta.innerText = formatDateForDisplay(t.date, t.time);
+    card.appendChild(meta);
+
+    // actions
+    const actions = document.createElement('div'); actions.style.display='flex'; actions.style.justifyContent='space-between'; actions.style.marginTop='10px';
+    const leftAct = document.createElement('div');
+    const completeBtn = document.createElement('button'); completeBtn.innerText = t.completed ? 'Undo' : 'Complete';
+    completeBtn.onclick = () => {
+      t.completed = !t.completed; saveJSON(STORAGE_TASKS, tasks); renderAll();
+      showToast(t.completed ? 'Marked completed' : 'Marked pending');
+    };
+    leftAct.appendChild(completeBtn);
+
+    const deleteBtn = document.createElement('button'); deleteBtn.innerText = 'Delete';
+    deleteBtn.onclick = () => {
+      // push to deleted stack (simple)
+      const confirmed = confirm('Delete this task?');
+      if(!confirmed) return;
+      tasks = tasks.filter(x => x.id !== t.id);
+      saveJSON(STORAGE_TASKS, tasks); renderAll();
+      showToast('Task deleted');
+    };
+    leftAct.appendChild(deleteBtn);
+
+    actions.appendChild(leftAct);
+
+    const rightAct = document.createElement('div'); rightAct.style.color='var(--muted)';
+    const days = t.date ? daysUntil(t.date) : null;
+    if(days !== null){
+      if(days <= 0) rightAct.innerHTML = `<strong style="color:var(--danger)">Due ${days===0 ? 'today' : 'overdue'}</strong>`;
+      else if(days <= 1) rightAct.innerHTML = `<strong style="color:var(--warn)">Due in ${days} day</strong>`;
+      else rightAct.innerText = `Due in ${days} days`;
+    }
+    actions.appendChild(rightAct);
+
+    card.appendChild(actions);
+
+    taskListEl.appendChild(card);
+  });
+}
+
+// ---------- Add / Save task logic ----------
+document.getElementById('addTaskBtn').addEventListener('click', () => openTaskModal());
+document.getElementById('cancelTaskBtn').addEventListener('click', closeTaskModal);
+
+function openTaskModal(editTask){
+  document.getElementById('modalTitle').innerText = editTask ? 'Edit Task' : 'Add Task';
+  modalOverlay.classList.remove('hidden');
+
+  // populate categories
+  renderCategories(); // ensure select exists
+  // clear inputs
+  if(!editTask){
+    document.getElementById('taskTitle').value='';
+    document.getElementById('taskDesc').value='';
+    document.getElementById('taskDate').value='';
+    document.getElementById('taskTime').value='';
+    document.getElementById('taskPriority').value='medium';
+    document.getElementById('taskCategory').value = categories[0].name;
+  } else {
+    // editing path - left as TODO for mini project
+  }
+}
+
+function closeTaskModal(){ modalOverlay.classList.add('hidden'); }
+
+document.getElementById('saveTaskBtn').addEventListener('click', () => {
+  const title = document.getElementById('taskTitle').value.trim();
+  const desc = document.getElementById('taskDesc').value.trim();
+  const date = document.getElementById('taskDate').value;
+  const time = document.getElementById('taskTime').value;
+  const priority = document.getElementById('taskPriority').value;
+  const category = document.getElementById('taskCategory').value || (categories[0] && categories[0].name) || 'General';
+
+  if(!title){ showToast('Please enter title'); return; }
+
+  const newTask = {
+    id: uid(),
+    title, desc, date, time, priority, category,
+    subject: category,
+    completed:false
+  };
+  tasks.push(newTask);
+  saveJSON(STORAGE_TASKS, tasks);
+  closeTaskModal();
+  showToast('Task added');
+  renderAll();
+});
+
+// ---------- Exam modal ----------
+document.getElementById('addExamBtn').addEventListener('click', () => { examModal.classList.remove('hidden'); });
+document.getElementById('cancelExamBtn').addEventListener('click', () => { examModal.classList.add('hidden'); });
+document.getElementById('saveExamBtn').addEventListener('click', () => {
+  const name = document.getElementById('examName').value.trim();
+  const date = document.getElementById('examDate').value;
+  if(!name || !date){ showToast('Exam name and date required'); return; }
+  // store as special task type
+  tasks.push({ id: uid(), title: name + ' (Exam)', desc:'', date, time:'', priority:'high', category:'Exam', subject:'Exam', completed:false, exam:true });
+  saveJSON(STORAGE_TASKS, tasks);
+  examModal.classList.add('hidden');
+  renderAll();
+});
+
+// ---------- Exam rendering ----------
+function renderExams(){
+  examListEl.innerHTML = '';
+  const exams = tasks.filter(t => t.exam);
+  if(exams.length===0){ examListEl.innerHTML = '<div style="color:var(--muted)">No exams</div>'; return; }
+  exams.forEach(e => {
+    const div = document.createElement('div');
+    const days = daysUntil(e.date);
+    div.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center">
+      <div><strong>${e.title}</strong><div style="font-size:12px;color:var(--muted)">In ${days} days</div></div>
+      <div style="text-align:right"><button onclick="goToExam('${e.id}')">View</button></div>
+    </div>`;
+    examListEl.appendChild(div);
+  });
+}
+window.goToExam = (id) => {
+  const t = tasks.find(x=>x.id===id);
+  if(!t) return;
+  showToast(`${t.title} due in ${daysUntil(t.date)} days`);
+};
+
+// ---------- Pomodoro (simple) ----------
+let pomTotalSeconds = 25*60;
+let pomTimerInterval = null;
+let pomRunning = false;
+
+function displayPom(){
+  const mm = Math.floor(pomTotalSeconds/60).toString().padStart(2,'0');
+  const ss = (pomTotalSeconds%60).toString().padStart(2,'0');
+  document.getElementById('pomodoroTimer').innerText = `${mm}:${ss}`;
+  pomSessionsEl.innerText = pomState.sessionsToday || 0;
+}
+displayPom();
+
+document.getElementById('pomStart').addEventListener('click', ()=>{
+  if(pomRunning) return;
+  pomRunning = true;
+  pomTimerInterval = setInterval(()=>{
+    if(pomTotalSeconds>0){
+      pomTotalSeconds--;
+      displayPom();
+      checkAlertsDuringPom();
+    } else {
+      clearInterval(pomTimerInterval);
+      pomRunning = false;
+      pomState.sessionsToday = (pomState.sessionsToday||0) + 1;
+      saveJSON(STORAGE_POM, pomState);
+      displayPom();
+      showToast('Pomodoro session complete! Take a 5-minute break.');
+      // reset to 25 min
+      pomTotalSeconds = 25*60; displayPom();
+    }
+  },1000);
+});
+
+document.getElementById('pomPause').addEventListener('click', ()=>{
+  clearInterval(pomTimerInterval);
+  pomRunning = false;
+});
+document.getElementById('pomReset').addEventListener('click', ()=>{
+  clearInterval(pomTimerInterval);
+  pomRunning = false;
+  pomTotalSeconds = 25*60; displayPom();
+});
+
+// ---------- Alerts (deadline-based) ----------
+function checkDeadlineAlerts(){
+  const now = new Date();
+  tasks.forEach(t => {
+    if(!t.date) return;
+    // build date+time
+    const dt = new Date(t.date + (t.time ? 'T'+t.time : 'T00:00'));
+    const diffMs = dt - now;
+    const diffH = diffMs / (1000*60*60);
+    if(diffH <= 6 && diffH > 0){
+      showToast(`Urgent: "${t.title}" is due in ${Math.ceil(diffH)} hour(s)`, 'danger');
+    } else if(diffH <= 24 && diffH > 6){
+      showToast(`Reminder: "${t.title}" is due within 24 hours`, 'warn');
+    }
+  });
+}
+
+// call it every 5 minutes (for mini we can do 1 minute)
+setInterval(checkDeadlineAlerts, 60*1000);
+checkDeadlineAlerts();
+
+// ---------- Light/Dark toggle ----------
+const themeBtn = document.getElementById('themeToggle');
+themeBtn.addEventListener('click', ()=>{
+  document.body.classList.toggle('dark');
+  themeBtn.innerText = document.body.classList.contains('dark') ? '☀️' : '🌙';
+});
+
+// ---------- Toaster ----------
+function showToast(msg, type){
+  const container = document.getElementById('toastContainer');
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.innerText = msg;
+  container.appendChild(t);
+  setTimeout(()=>{ t.style.opacity='0'; setTimeout(()=>t.remove(),400); }, 4500);
+  if(type==='danger'){ t.style.background='var(--danger)'; }
+  if(type==='warn'){ t.style.background='var(--warn)'; }
+}
+
+// ---------- Export / Import ----------
+document.getElementById('exportBtn').addEventListener('click', ()=>{
+  const blob = new Blob([JSON.stringify({tasks,categories,pomState},null,2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download='taskforge-data.json'; a.click();
+  URL.revokeObjectURL(url);
+});
+
+document.getElementById('importFile').addEventListener('change', (ev)=>{
+  const f = ev.target.files[0];
+  if(!f) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try{
+      const obj = JSON.parse(e.target.result);
+      if(obj.tasks) tasks = obj.tasks;
+      if(obj.categories) categories = obj.categories;
+      if(obj.pomState) pomState = obj.pomState;
+      saveJSON(STORAGE_TASKS, tasks); saveJSON(STORAGE_CATS,categories); saveJSON(STORAGE_POM,pomState);
+      renderAll();
+      showToast('Data imported');
+    }catch(err){ showToast('Invalid file'); }
+  };
+  reader.readAsText(f);
+});
+
+// ---------- Helper and render all ----------
+function renderAll(){
+  renderCategories();
+  renderTasks();
+  renderExams();
+  todaySummary.innerText = `Tasks: ${tasks.length} • Exams: ${tasks.filter(t=>t.exam).length}`;
+  quoteEl.innerText = getDailyQuote();
+  displayPom();
+}
+
+// initial render
+renderAll();
+  </script>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <h1>TaskForge</h1>
+        <button id="themeToggle" class="theme-btn">🌙</button>
+      </div>
+
+      <div class="quote-card">
+        <div id="quote">Loading motivational quote...</div>
+      </div>
+
+      <div class="category-section">
+        <h3>Categories</h3>
+        <ul id="categoryList" class="category-list"></ul>
+        <div class="add-category">
+          <input id="newCategoryName" placeholder="New category (e.g. Math)" />
+          <input id="newCategoryColor" type="color" value="#6ea8fe" />
+          <button id="addCategoryBtn">Add</button>
+        </div>
+      </div>
+
+      <div class="filters">
+        <h3>Filters</h3>
+        <div class="filter-row">
+          <label>Priority</label>
+          <select id="priorityFilter">
+            <option value="all">All</option>
+            <option value="high">High 🔥</option>
+            <option value="medium">Medium ⚠️</option>
+            <option value="low">Low ✅</option>
+          </select>
+        </div>
+        <div class="filter-row">
+          <label>Category</label>
+          <select id="categoryFilter">
+            <option value="all">All</option>
+          </select>
+        </div>
+        <div class="filter-row">
+          <button id="showToday">Today</button>
+          <button id="showWeek">This Week</button>
+          <button id="clearFilters">Clear</button>
+        </div>
+      </div>
+
+      <div class="export-section">
+        <h3>Data</h3>
+        <button id="exportBtn">Export JSON</button>
+        <input id="importFile" type="file" accept=".json" />
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="left">
+          <h2>Dashboard</h2>
+          <p id="todaySummary">Loading...</p>
+        </div>
+        <div class="right">
+          <button id="addTaskBtn" class="primary">+ Add Task</button>
+        </div>
+      </header>
+
+      <section class="widgets">
+        <div class="widget task-widget">
+          <h3>Tasks</h3>
+          <div id="taskList" class="task-list"></div>
+        </div>
+
+        <div class="widget right-widgets">
+          <div class="widget small">
+            <h4>Pomodoro</h4>
+            <div class="pomodoro">
+              <div id="pomodoroTimer" class="pomodoro-timer">25:00</div>
+              <div class="pom-controls">
+                <button id="pomStart">Start</button>
+                <button id="pomPause">Pause</button>
+                <button id="pomReset">Reset</button>
+              </div>
+              <div class="pom-stats">Sessions today: <span id="pomSessions">0</span></div>
+            </div>
+          </div>
+
+          <div class="widget small">
+            <h4>Exam Countdown</h4>
+            <div id="examList" class="exam-list"></div>
+            <button id="addExamBtn">+ Add Exam</button>
+          </div>
+        </div>
+      </section>
+
+      <footer class="footer">
+        <div>Made for students • light, friendly & focused ✨</div>
+      </footer>
+    </main>
+  </div>
+
+  <!-- Add Task Modal -->
+  <div id="modalOverlay" class="modal-overlay hidden">
+    <div class="modal">
+      <h3 id="modalTitle">Add Task</h3>
+      <div class="form-row">
+        <label>Title</label>
+        <input id="taskTitle" />
+      </div>
+      <div class="form-row">
+        <label>Description</label>
+        <textarea id="taskDesc" rows="3"></textarea>
+      </div>
+      <div class="form-row">
+        <label>Category</label>
+        <select id="taskCategory"></select>
+      </div>
+      <div class="form-row split">
+        <div>
+          <label>Due Date</label>
+          <input id="taskDate" type="date" />
+        </div>
+        <div>
+          <label>Time (optional)</label>
+          <input id="taskTime" type="time" />
+        </div>
+      </div>
+      <div class="form-row">
+        <label>Priority</label>
+        <select id="taskPriority">
+          <option value="low">Low</option>
+          <option value="medium" selected>Medium</option>
+          <option value="high">High</option>
+        </select>
+      </div>
+      <div class="form-row align-right">
+        <button id="saveTaskBtn" class="primary">Save</button>
+        <button id="cancelTaskBtn">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Exam Modal -->
+  <div id="examModal" class="modal-overlay hidden">
+    <div class="modal">
+      <h3>Add Exam</h3>
+      <div class="form-row">
+        <label>Exam Name</label>
+        <input id="examName" />
+      </div>
+      <div class="form-row">
+        <label>Exam Date</label>
+        <input id="examDate" type="date" />
+      </div>
+      <div class="form-row align-right">
+        <button id="saveExamBtn" class="primary">Save Exam</button>
+        <button id="cancelExamBtn">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast container -->
+  <div id="toastContainer" class="toast-container"></div>
+
+</body>
+</html>
