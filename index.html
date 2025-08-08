@@ -1,191 +1,756 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Student Task Manager</title>
-<style>
-    body { font-family: Arial, sans-serif; background: #f5f5f5; margin: 0; padding: 0; }
-    header { background: #4cafef; color: white; padding: 1rem; text-align: center; }
-    .container { max-width: 900px; margin: auto; padding: 1rem; }
-    h2 { border-bottom: 2px solid #ddd; padding-bottom: 0.3rem; }
-    .section { background: white; padding: 1rem; margin-bottom: 1rem; border-radius: 5px; }
-    .task-input, .filter-input { display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap; }
-    input, select, button { padding: 0.5rem; }
-    button { cursor: pointer; border: none; }
-    .add-btn { background: #4caf50; color: white; }
-    .task-list { list-style: none; padding: 0; }
-    .task { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; margin-bottom: 0.5rem; border-left: 5px solid gray; background: white; }
-    .priority-low { border-color: green; }
-    .priority-medium { border-color: orange; }
-    .priority-high { border-color: red; }
-    .overdue { background: #ffe5e5; }
-    .quote { background: #e3f2fd; padding: 0.5rem; border-left: 5px solid #2196f3; font-style: italic; }
-    .timer-display { font-size: 1.5rem; font-weight: bold; margin-top: 0.5rem; }
-</style>
-</head>
-<body>
-
-<header>
-    <h1>Student Task Manager</h1>
-</header>
-
-<div class="container">
-
-    <!-- Task Manager -->
-    <div class="section">
-        <h2>Tasks</h2>
-        <div class="task-input">
-            <input type="text" id="taskTitle" placeholder="Task title">
-            <select id="taskCategory">
-                <option value="study">Study</option>
-                <option value="homework">Homework</option>
-                <option value="revision">Revision</option>
-                <option value="misc">Misc</option>
-            </select>
-            <select id="taskPriority">
-                <option value="low">Low Priority</option>
-                <option value="medium">Medium Priority</option>
-                <option value="high">High Priority</option>
-            </select>
-            <input type="date" id="taskDeadline">
-            <button class="add-btn" onclick="addTask()">Add</button>
-        </div>
-
-        <div class="filter-input">
-            <label>Filter by Category:</label>
-            <select id="filterCategory" onchange="filterTasks()">
-                <option value="all">All</option>
-                <option value="study">Study</option>
-                <option value="homework">Homework</option>
-                <option value="revision">Revision</option>
-                <option value="misc">Misc</option>
-            </select>
-        </div>
-
-        <ul id="taskList" class="task-list"></ul>
-    </div>
-
-    <!-- Pomodoro Timer -->
-    <div class="section">
-        <h2>Pomodoro Timer</h2>
-        <div class="timer-display" id="pomodoroDisplay">25:00</div>
-        <button onclick="startPomodoro()">Start</button>
-        <button onclick="resetPomodoro()">Reset</button>
-    </div>
-
-    <!-- Exam Countdown -->
-    <div class="section">
-        <h2>Exam Countdown</h2>
-        <input type="date" id="examDate">
-        <button onclick="startCountdown()">Set Exam Date</button>
-        <div class="timer-display" id="countdownDisplay">No exam date set.</div>
-    </div>
-
-    <!-- Motivational Quote -->
-    <div class="section">
-        <h2>Motivation</h2>
-        <div class="quote" id="quote">Loading motivational quote...</div>
-    </div>
-
-</div>
-
-<script>
-    const quotes = [
-        "Push yourself, because no one else is going to do it for you.",
-        "Great things never come from comfort zones.",
-        "Dream it. Wish it. Do it.",
-        "The harder you work for something, the greater you’ll feel when you achieve it.",
-        "Don’t watch the clock; do what it does. Keep going."
-    ];
-
-    function loadQuote() {
-        document.getElementById('quote').textContent = quotes[Math.floor(Math.random() * quotes.length)];
-    }
-
-    function addTask() {
-        const title = document.getElementById('taskTitle').value.trim();
-        const category = document.getElementById('taskCategory').value;
-        const priority = document.getElementById('taskPriority').value;
-        const deadline = document.getElementById('taskDeadline').value;
-
-        if (!title) { alert("Enter a task"); return; }
-
-        const li = document.createElement('li');
-        li.className = `task priority-${priority}`;
-        li.setAttribute("data-category", category);
-
-        const deadlineDate = deadline ? new Date(deadline) : null;
-        const today = new Date();
-        let deadlineText = deadline ? ` (Due: ${deadline})` : "";
-
-        if (deadlineDate && deadlineDate < today) {
-            li.classList.add("overdue");
-            deadlineText += " ⚠️ Overdue";
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudyForge | Modern Student Task Manager</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #4361ee;
+            --primary-light: #e0e7ff;
+            --secondary: #3f37c9;
+            --danger: #f72585;
+            --success: #4cc9f0;
+            --warning: #f8961e;
+            --dark: #212529;
+            --light: #f8f9fa;
+            --gray: #adb5bd;
         }
 
-        li.innerHTML = `<span>${title} - ${category}${deadlineText}</span>
-                        <button onclick="this.parentElement.remove()">❌</button>`;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
 
-        document.getElementById('taskList').appendChild(li);
-        document.getElementById('taskTitle').value = "";
-    }
+        body {
+            background: #f5f7fa;
+            color: var(--dark);
+            line-height: 1.6;
+        }
 
-    function filterTasks() {
-        const filter = document.getElementById('filterCategory').value;
-        document.querySelectorAll("#taskList .task").forEach(task => {
-            task.style.display = (filter === "all" || task.dataset.category === filter) ? "flex" : "none";
-        });
-    }
+        /* Layout */
+        .app-container {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            min-height: 100vh;
+        }
 
-    // Pomodoro Timer
-    let pomodoroTime = 25 * 60;
-    let pomodoroInterval;
-    function startPomodoro() {
-        clearInterval(pomodoroInterval);
-        pomodoroInterval = setInterval(() => {
-            pomodoroTime--;
-            updatePomodoroDisplay();
-            if (pomodoroTime <= 0) {
-                clearInterval(pomodoroInterval);
-                alert("Pomodoro complete! Take a 5 min break.");
-                pomodoroTime = 5 * 60;
-                updatePomodoroDisplay();
+        /* Sidebar */
+        .sidebar {
+            background: white;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            padding: 1.5rem;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            color: var(--primary);
+            font-weight: 700;
+            font-size: 1.5rem;
+        }
+
+        .logo i {
+            font-size: 1.8rem;
+        }
+
+        .nav-menu {
+            list-style: none;
+            margin-bottom: 2rem;
+        }
+
+        .nav-item {
+            margin-bottom: 0.5rem;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            color: var(--dark);
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            background: var(--primary-light);
+            color: var(--primary);
+        }
+
+        .nav-link i {
+            width: 24px;
+            text-align: center;
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 2rem;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .greeting h1 {
+            font-size: 1.8rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .greeting p {
+            color: var(--gray);
+        }
+
+        .user-profile {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        /* Cards */
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        /* Task Manager */
+        .task-form {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr auto;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-label {
+            font-size: 0.875rem;
+            color: var(--gray);
+            margin-bottom: 0.25rem;
+        }
+
+        .form-control {
+            padding: 0.75rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border 0.2s;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--secondary);
+        }
+
+        .btn-sm {
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+        }
+
+        .filter-bar {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .filter-btn {
+            background: white;
+            border: 1px solid #e2e8f0;
+            color: var(--dark);
+        }
+
+        .filter-btn.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+
+        .task-list {
+            list-style: none;
+        }
+
+        .task-item {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 0.75rem;
+            background: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            transition: transform 0.2s;
+        }
+
+        .task-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .task-checkbox {
+            margin-right: 1rem;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .task-content {
+            flex: 1;
+        }
+
+        .task-title {
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+
+        .task-meta {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.875rem;
+            color: var(--gray);
+        }
+
+        .task-category {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .task-priority {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+        }
+
+        .priority-high {
+            background: var(--danger);
+        }
+
+        .priority-medium {
+            background: var(--warning);
+        }
+
+        .priority-low {
+            background: var(--success);
+        }
+
+        .task-due {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .task-due.overdue {
+            color: var(--danger);
+            font-weight: 500;
+        }
+
+        .task-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .task-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            border: none;
+            color: var(--gray);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .task-btn:hover {
+            background: #f1f5f9;
+            color: var(--dark);
+        }
+
+        .task-btn.delete:hover {
+            color: var(--danger);
+        }
+
+        /* Productivity Tools */
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .timer-display {
+            font-size: 2.5rem;
+            font-weight: 700;
+            text-align: center;
+            margin: 1rem 0;
+            font-family: 'Courier New', monospace;
+            color: var(--dark);
+        }
+
+        .timer-controls {
+            display: flex;
+            gap: 0.75rem;
+            justify-content: center;
+        }
+
+        .quote-card {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .quote-text {
+            font-size: 1.1rem;
+            font-style: italic;
+            margin-bottom: 1rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .quote-author {
+            text-align: right;
+            font-weight: 600;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Responsive */
+        @media (max-width: 992px) {
+            .app-container {
+                grid-template-columns: 1fr;
             }
-        }, 1000);
-    }
-    function resetPomodoro() {
-        clearInterval(pomodoroInterval);
-        pomodoroTime = 25 * 60;
-        updatePomodoroDisplay();
-    }
-    function updatePomodoroDisplay() {
-        const min = String(Math.floor(pomodoroTime / 60)).padStart(2, '0');
-        const sec = String(pomodoroTime % 60).padStart(2, '0');
-        document.getElementById('pomodoroDisplay').textContent = `${min}:${sec}`;
-    }
+            
+            .sidebar {
+                height: auto;
+                position: static;
+            }
+            
+            .task-form {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="logo">
+                <i class="fas fa-graduation-cap"></i>
+                <span>StudyForge</span>
+            </div>
+            
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="#" class="nav-link active">
+                        <i class="fas fa-tasks"></i>
+                        <span>Tasks</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-calendar-alt"></i>
+                        <span>Calendar</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Progress</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-book"></i>
+                        <span>Subjects</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-cog"></i>
+                        <span>Settings</span>
+                    </a>
+                </li>
+            </ul>
+            
+            <div class="quote-card">
+                <p class="quote-text" id="motivationalQuote">Push yourself, because no one else is going to do it for you.</p>
+                <p class="quote-author">- Motivational Quote</p>
+            </div>
+        </aside>
 
-    // Exam Countdown
-    function startCountdown() {
-        const dateInput = document.getElementById('examDate').value;
-        if (!dateInput) { alert("Select an exam date"); return; }
-        const examDate = new Date(dateInput).getTime();
-        setInterval(() => {
-            const now = new Date().getTime();
-            const diff = examDate - now;
-            if (diff <= 0) {
-                document.getElementById('countdownDisplay').textContent = "Exam Day!";
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="header">
+                <div class="greeting">
+                    <h1>Good Morning, Alex!</h1>
+                    <p>Here's what you need to focus on today</p>
+                </div>
+                <div class="user-profile">A</div>
+            </header>
+
+            <!-- Task Manager Section -->
+            <section class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Task Manager</h2>
+                    <div class="task-actions">
+                        <button class="btn btn-primary btn-sm" id="addTaskBtn">
+                            <i class="fas fa-plus"></i> Add Task
+                        </button>
+                    </div>
+                </div>
+                
+                <form class="task-form" id="taskForm">
+                    <div class="form-group">
+                        <label class="form-label">Task Title</label>
+                        <input type="text" class="form-control" id="taskTitle" placeholder="What needs to be done?">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Category</label>
+                        <select class="form-control" id="taskCategory">
+                            <option value="study">Study</option>
+                            <option value="homework">Homework</option>
+                            <option value="project">Project</option>
+                            <option value="research">Research</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Priority</label>
+                        <select class="form-control" id="taskPriority">
+                            <option value="low">Low</option>
+                            <option value="medium">Medium</option>
+                            <option value="high">High</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Due Date</label>
+                        <input type="date" class="form-control" id="taskDueDate">
+                    </div>
+                </form>
+                
+                <div class="filter-bar">
+                    <button class="btn filter-btn active" data-filter="all">All Tasks</button>
+                    <button class="btn filter-btn" data-filter="today">Today</button>
+                    <button class="btn filter-btn" data-filter="high">High Priority</button>
+                    <button class="btn filter-btn" data-filter="study">Study</button>
+                </div>
+                
+                <ul class="task-list" id="taskList">
+                    <!-- Tasks will be added here dynamically -->
+                </ul>
+            </section>
+
+            <!-- Productivity Tools Section -->
+            <section>
+                <h2 class="card-title" style="margin-bottom: 1.5rem;">Productivity Tools</h2>
+                <div class="tools-grid">
+                    <!-- Pomodoro Timer -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Pomodoro Timer</h2>
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="timer-display" id="pomodoroTimer">25:00</div>
+                        <div class="timer-controls">
+                            <button class="btn btn-primary" id="startPomodoro">
+                                <i class="fas fa-play"></i> Start
+                            </button>
+                            <button class="btn" id="resetPomodoro">
+                                <i class="fas fa-redo"></i> Reset
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Exam Countdown -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Exam Countdown</h2>
+                            <i class="fas fa-calendar-day"></i>
+                        </div>
+                        <input type="date" class="form-control" id="examDateInput" style="margin-bottom: 1rem;">
+                        <div class="timer-display" id="examCountdown">Select exam date</div>
+                        <div class="timer-controls">
+                            <button class="btn btn-primary" id="startCountdown">
+                                <i class="fas fa-rocket"></i> Start
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        // Motivational Quotes
+        const quotes = [
+            {
+                text: "Push yourself, because no one else is going to do it for you.",
+                author: "Anonymous"
+            },
+            {
+                text: "The secret of getting ahead is getting started.",
+                author: "Mark Twain"
+            },
+            {
+                text: "Don't watch the clock; do what it does. Keep going.",
+                author: "Sam Levenson"
+            },
+            {
+                text: "Success is the sum of small efforts, repeated day in and day out.",
+                author: "Robert Collier"
+            },
+            {
+                text: "The expert in anything was once a beginner.",
+                author: "Helen Hayes"
+            }
+        ];
+
+        // Load random quote
+        function loadRandomQuote() {
+            const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
+            document.getElementById('motivationalQuote').textContent = randomQuote.text;
+        }
+
+        // Task Manager
+        let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+
+        function renderTasks(filter = 'all') {
+            const taskList = document.getElementById('taskList');
+            taskList.innerHTML = '';
+
+            const today = new Date().toISOString().split('T')[0];
+            
+            let filteredTasks = tasks;
+            if (filter === 'today') {
+                filteredTasks = tasks.filter(task => task.dueDate === today);
+            } else if (filter === 'high') {
+                filteredTasks = tasks.filter(task => task.priority === 'high');
+            } else if (filter === 'study') {
+                filteredTasks = tasks.filter(task => task.category === 'study');
+            }
+
+            if (filteredTasks.length === 0) {
+                taskList.innerHTML = '<p style="text-align: center; color: var(--gray); padding: 1rem;">No tasks found</p>';
                 return;
             }
-            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-            document.getElementById('countdownDisplay').textContent = `${days}d ${hours}h ${minutes}m left`;
-        }, 1000);
-    }
 
-    loadQuote();
-</script>
+            filteredTasks.forEach(task => {
+                const taskItem = document.createElement('li');
+                taskItem.className = 'task-item';
+                
+                const isOverdue = task.dueDate && task.dueDate < today;
+                const dueDateText = task.dueDate ? 
+                    (isOverdue ? 'Overdue' : new Date(task.dueDate).toLocaleDateString()) : 'No deadline';
+                
+                taskItem.innerHTML = `
+                    <input type="checkbox" class="task-checkbox" ${task.completed ? 'checked' : ''}>
+                    <div class="task-content">
+                        <div class="task-title">${task.title}</div>
+                        <div class="task-meta">
+                            <span class="task-category">
+                                <span class="task-priority priority-${task.priority}"></span>
+                                ${task.category}
+                            </span>
+                            <span class="task-due ${isOverdue ? 'overdue' : ''}">
+                                <i class="far fa-calendar-alt"></i>
+                                ${dueDateText}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="task-actions">
+                        <button class="task-btn edit">
+                            <i class="far fa-edit"></i>
+                        </button>
+                        <button class="task-btn delete">
+                            <i class="far fa-trash-alt"></i>
+                        </button>
+                    </div>
+                `;
 
+                taskList.appendChild(taskItem);
+            });
+        }
+
+        function addTask() {
+            const title = document.getElementById('taskTitle').value.trim();
+            const category = document.getElementById('taskCategory').value;
+            const priority = document.getElementById('taskPriority').value;
+            const dueDate = document.getElementById('taskDueDate').value;
+
+            if (!title) {
+                alert('Please enter a task title');
+                return;
+            }
+
+            const newTask = {
+                id: Date.now(),
+                title,
+                category,
+                priority,
+                dueDate,
+                completed: false
+            };
+
+            tasks.push(newTask);
+            saveTasks();
+            renderTasks();
+            document.getElementById('taskForm').reset();
+        }
+
+        function saveTasks() {
+            localStorage.setItem('tasks', JSON.stringify(tasks));
+        }
+
+        // Filter tasks
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                renderTasks(btn.dataset.filter);
+            });
+        });
+
+        // Pomodoro Timer
+        let pomodoroTime = 25 * 60;
+        let pomodoroInterval;
+        let isPomodoroRunning = false;
+
+        function updatePomodoroDisplay() {
+            const minutes = Math.floor(pomodoroTime / 60).toString().padStart(2, '0');
+            const seconds = (pomodoroTime % 60).toString().padStart(2, '0');
+            document.getElementById('pomodoroTimer').textContent = `${minutes}:${seconds}`;
+        }
+
+        function startPomodoro() {
+            if (isPomodoroRunning) return;
+            
+            isPomodoroRunning = true;
+            document.getElementById('startPomodoro').innerHTML = '<i class="fas fa-pause"></i> Pause';
+            
+            pomodoroInterval = setInterval(() => {
+                pomodoroTime--;
+                updatePomodoroDisplay();
+                
+                if (pomodoroTime <= 0) {
+                    clearInterval(pomodoroInterval);
+                    alert('Pomodoro session complete! Take a 5-minute break.');
+                    pomodoroTime = 5 * 60;
+                    updatePomodoroDisplay();
+                    isPomodoroRunning = false;
+                    document.getElementById('startPomodoro').innerHTML = '<i class="fas fa-play"></i> Start';
+                }
+            }, 1000);
+        }
+
+        function resetPomodoro() {
+            clearInterval(pomodoroInterval);
+            pomodoroTime = 25 * 60;
+            updatePomodoroDisplay();
+            isPomodoroRunning = false;
+            document.getElementById('startPomodoro').innerHTML = '<i class="fas fa-play"></i> Start';
+        }
+
+        // Exam Countdown
+        function updateExamCountdown() {
+            const examDate = document.getElementById('examDateInput').value;
+            if (!examDate) return;
+
+            const examTime = new Date(examDate).getTime();
+            const now = new Date().getTime();
+            const distance = examTime - now;
+
+            if (distance < 0) {
+                document.getElementById('examCountdown').textContent = 'Exam day!';
+                return;
+            }
+
+            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+
+            document.getElementById('examCountdown').textContent = `${days}d ${hours}h ${minutes}m`;
+        }
+
+        // Event Listeners
+        document.getElementById('addTaskBtn').addEventListener('click', addTask);
+        document.getElementById('startPomodoro').addEventListener('click', startPomodoro);
+        document.getElementById('resetPomodoro').addEventListener('click', resetPomodoro);
+        document.getElementById('startCountdown').addEventListener('click', () => {
+            setInterval(updateExamCountdown, 1000);
+            updateExamCountdown();
+        });
+
+        // Initialize
+        loadRandomQuote();
+        renderTasks();
+
+        // Change quote every 30 seconds
+        setInterval(loadRandomQuote, 30000);
+    </script>
 </body>
 </html>
